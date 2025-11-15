@@ -2,7 +2,6 @@ services:
   - type: web
     name: efootball-freaks
     env: python
-    region: oregon
     plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
