@@ -1,5 +1,56 @@
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Rajdhani:wght@600&display=swap');
-body { font-family: 'Rajdhani', sans-serif; background: #111; }
-h1, h2 { font-family: 'Orbitron', sans-serif; }
-button, input { transition: 0.3s; }
-button:hover { transform: translateY(-2px); }
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Rajdhani', sans-serif; background: linear-gradient(135deg, #0f0f0f, #1a1a2e); color: #eee; min-height: 100vh; }
+
+.container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+h1, h2, h3 { font-family: 'Orbitron', sans-serif; }
+.text-green { color: #00ff88; }
+.text-red { color: #ff3366; }
+
+.alert { padding: 1rem; margin: 1rem auto; border-radius: 8px; max-width: 600px; }
+.alert-success { background: #004d26; color: #00ff88; }
+.alert-danger { background: #4d0000; color: #ff3366; }
+
+.hero { height: 100vh; background: url('https://images.unsplash.com/photo-1542751110-97427bbefb69?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover; display: flex; align-items: center; justify-content: center; position: relative; }
+.hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); }
+.hero-content { position: relative; text-align: center; z-index: 2; }
+.title { font-size: 4rem; color: #00ff88; text-shadow: 0 0 20px #00ff88; animation: glow 2s infinite alternate; }
+.subtitle { font-size: 1.5rem; margin: 1rem 0; }
+.btn-group { margin-top: 2rem; }
+.btn { padding: 1rem 2rem; margin: 0.5rem; border: none; border-radius: 50px; font-weight: bold; cursor: pointer; transition: all 0.3s; text-decoration: none; display: inline-block; }
+.btn-primary { background: #00ff88; color: #000; }
+.btn-primary:hover { background: #00cc66; transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,255,136,0.3); }
+.btn-secondary { background: #333; color: #fff; }
+.btn-secondary:hover { background: #555; }
+.btn-success { background: #00cc66; }
+.btn-danger { background: #ff3366; }
+.btn-sm { padding: 0.4rem 0.8rem; font-size: 0.9rem; }
+
+.auth-container { display: flex; justify-content: center; align-items: center; min-height: 80vh; }
+.auth-card { background: rgba(30,30,50,0.9); padding: 2.5rem; border-radius: 16px; width: 100%; max-width: 400px; box-shadow: 0 0 30px rgba(0,255,136,0.2); }
+.auth-card input { width: 100%; padding: 1rem; margin: 0.8rem 0; background: #222; border: 1px solid #444; border-radius: 8px; color: #fff; }
+.auth-card input:focus { outline: none; border-color: #00ff88; box-shadow: 0 0 10px #00ff88; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1rem; }
+.card { background: rgba(40,40,60,0.8); padding: 1.5rem; border-radius: 12px; border: 1px solid #00ff88; transition: 0.3s; }
+.card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,255,136,0.2); }
+
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem; }
+@media (max-width: 768px) { .split { grid-template-columns: 1fr; } }
+
+.fixture { background: rgba(50,50,70,0.8); padding: 1rem; margin: 0.5rem 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+.score { color: #00ff88; font-weight: bold; }
+.score-form { display: flex; align-items: center; gap: 0.5rem; }
+.score-input { width: 50px; padding: 0.5rem; background: #222; color: #fff; border: 1px solid #444; border-radius: 4px; text-align: center; }
+
+.table { width: 100%; border-collapse: collapse; background: rgba(40,40,60,0.8); border-radius: 8px; overflow: hidden; }
+.table th, .table td { padding: 1rem; text-align: center; border-bottom: 1px solid #444; }
+.table th { background: #00ff88; color: #000; }
+.table tr:hover { background: rgba(0,255,136,0.1); }
+.pts { font-weight: bold; color: #00ff88; }
+
+.inline { display: flex; gap: 1rem; margin: 2rem 0; }
+.input-inline { padding: 1rem; background: #222; border: 1px solid #444; border-radius: 8px; color: #fff; flex: 1; }
+
+footer { margin-top: 4rem; font-size: 0.9rem; }
