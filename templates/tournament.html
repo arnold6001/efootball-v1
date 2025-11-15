@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container" data-aos="fade-up">
+  <h1 class="text-green">{{ tournament.name }}</h1>
+  <p>Created by: {{ tournament.created_by }}</p>
+
+  {% if fixtures|length == 0 %}
+  <form method="POST" action="/tournament/generate/{{ tournament.id }}">
+    <button type="submit" class="btn btn-danger">Generate Fixtures</button>
+  </form>
+  {% endif %}
+
+  <div class="split">
+    <div>
+      <h2>Fixtures</h2>
+      {% for f in fixtures %}
+      <div class="fixture">
+        <div><strong>{{ f.home }}</strong> vs <strong>{{ f.away }}</strong></div>
+        {% if f.played %}
+        <span class="score">{{ f.home_score }} - {{ f.away_score }}</span>
+        {% else %}
+        <form method="POST" action="/tournament/score/{{ tournament.id }}" class="score-form">
+          <input type="hidden" name="fixture_id" value="{{ f.id }}">
+          <input type="number" name="home_score" min="0" max="20" required class="score-input">
+          <span>-</span>
+          <input type="number" name="away_score" min="0" max="20" required class="score-input">
+          <button type="submit" class="btn-sm">Save</button>
+        </form>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    <div>
+      <h2>Standings</h2>
+      <table class="table">
+        <thead>
+          <tr><th>Player</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Pts</th></tr>
+        </thead>
+        <tbody>
+          {% for s in standings %}
+          <tr>
+            <td><strong>{{ s.player }}</strong></td>
+            <td>{{ s.played }}</td><td>{{ s.won }}</td><td>{{ s.drawn }}</td><td>{{ s.lost }}</td>
+            <td>{{ s.gf }}</td><td>{{ s.ga }}</td><td>{{ s.gd }}</td><td class="pts">{{ s.points }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <form method="POST" action="/tournament/join/{{ tournament.id }}" class="mt-6">
+    <button type="submit" class="btn btn-secondary">Join Tournament</button>
+  </form>
+</div>
+{% endblock %}
