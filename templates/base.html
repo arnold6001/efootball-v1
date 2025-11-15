@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>eFootball Freaks</title>
+  <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet" />
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <div class="bg-red-600 p-3 text-center">{{ messages[0] }}</div>
+    {% endif %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+  <script> AOS.init(); </script>
+</body>
+</html>
