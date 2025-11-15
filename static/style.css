@@ -76,3 +76,17 @@ body { font-family: 'Rajdhani', sans-serif; background: #0a0a0a; color: #eee; mi
   from { text-shadow: 0 0 10px #00ff88; }
   to { text-shadow: 0 0 30px #00ff88, 0 0 50px #00ff88; }
 }
+.share-box { 
+  background: #111; 
+  padding: 1rem; 
+  border-radius: 8px; 
+  margin: 1rem 0; 
+  border: 1px solid #00ff88; 
+}
+.share-box code { 
+  display: block; 
+  margin: 0.5rem 0; 
+  word-break: break-all; 
+}
+.search-bar { margin: 2rem 0; text-align: center; }
+.search-bar input { width: 300px; max-width: 100%; }
