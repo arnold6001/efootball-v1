@@ -7,23 +7,38 @@
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Rajdhani:wght@600&display=swap" rel="stylesheet">
   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
   <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet" />
-  <link href="{{ url_for('static', filename='animations.css') }}" rel="stylesheet" />
 </head>
 <body>
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
       {% for category, message in messages %}
-        <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} text-center">{{ message }}</div>
+        <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }}">{{ message }}</div>
       {% endfor %}
     {% endif %}
   {% endwith %}
 
+  <nav class="navbar">
+    <a href="/" class="logo">eFootball Freaks</a>
+    {% if user %}
+    <div class="nav-links">
+      <a href="/dashboard">Dashboard</a>
+      <a href="/logout">Logout</a>
+      <a href="/profile/{{ user.username }}" class="profile-link">@{{ user.username }}</a>
+    </div>
+    {% else %}
+    <div class="nav-links">
+      <a href="/login">Login</a>
+      <a href="/register">Register</a>
+    </div>
+    {% endif %}
+  </nav>
+
   {% block content %}{% endblock %}
 
-  <footer class="text-center py-6 text-gray-400">
+  <footer class="footer">
     <p>© 2025 <strong>Arnold Chirchir</strong> | eFootball Freaks</p>
-    <p>Email: <a href="mailto:arnoldkipruto193@gmail.com" class="text-green-400">arnoldkipruto193@gmail.com</a></p>
-    <p>WhatsApp: <a href="https://wa.me/254703110780" class="text-green-400">+254 703 110 780</a></p>
+    <p>Email: <a href="mailto:arnoldkipruto193@gmail.com">arnoldkipruto193@gmail.com</a></p>
+    <p>WhatsApp: <a href="https://wa.me/254703110780">+254 703 110 780</a></p>
   </footer>
 
   <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
