@@ -1,12 +1,6 @@
 @keyframes glow {
-  from { text-shadow: 0 0 10px #00ff88; }
-  to { text-shadow: 0 0 30px #00ff88, 0 0 50px #00ff88; }
+  0% { text-shadow: 0 0 10px #86efac; }
+  50% { text-shadow: 0 0 20px #86efac; }
+  100% { text-shadow: 0 0 10px #86efac; }
 }
-
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
-}
-
-.pulse { animation: pulse 2s infinite; }
+.title { animation: glow 2s infinite; }
