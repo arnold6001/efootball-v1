@@ -1,10 +1,11 @@
-# app.py - eFootball Freaks (100% Working)
+# app.py - eFootball Freaks (FINAL VERSION - 100% WORKING)
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 import os
 import itertools
-from datetime import datetime
+import secrets
+import urllib.parse
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SESSION_SECRET', 'efootball-freaks-arnold-chirchir-2025')
@@ -32,7 +33,8 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             created_by TEXT NOT NULL,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            invite_code TEXT UNIQUE
         );
 
         CREATE TABLE IF NOT EXISTS tournament_players (
@@ -137,6 +139,21 @@ def dashboard():
     conn.close()
     return render_template('dashboard.html', user=session['user'], tournaments=tournaments)
 
+@app.route('/search')
+def search():
+    query = request.args.get('q', '').strip()
+    conn = get_db()
+    tournaments = []
+    if query:
+        tournaments = conn.execute('''
+            SELECT t.*, u.username as creator_name FROM tournaments t
+            JOIN users u ON t.created_by = u.username
+            WHERE t.name LIKE ?
+            ORDER BY t.created_at DESC
+        ''', (f'%{query}%',)).fetchall()
+    conn.close()
+    return render_template('search.html', tournaments=tournaments, query=query, user=session.get('user'))
+
 @app.route('/tournament/create', methods=['POST'])
 def create_tournament():
     if not session.get('user'): return redirect(url_for('login'))
@@ -144,15 +161,20 @@ def create_tournament():
     if not name:
         flash('Tournament name required', 'error')
         return redirect(url_for('dashboard'))
+    
+    code = secrets.token_urlsafe(8)
     created_by = session['user']['username']
+    
     conn = get_db()
-    cursor = conn.execute('INSERT INTO tournaments (name, created_by) VALUES (?, ?)', (name, created_by))
+    cursor = conn.execute('INSERT INTO tournaments (name, created_by, invite_code) VALUES (?, ?, ?)', 
+                         (name, created_by, code))
     tid = cursor.lastrowid
     conn.execute('INSERT INTO tournament_players (tournament_id, user_id) VALUES (?, ?)', (tid, session['user']['id']))
     conn.commit()
     conn.close()
-    flash('Tournament created!', 'success')
-    return redirect(url_for('dashboard'))
+    
+    flash('Tournament created! Share this link:', 'success')
+    return redirect(url_for('view_tournament', tid=tid))
 
 @app.route('/tournament/<int:tid>')
 def view_tournament(tid):
@@ -173,26 +195,39 @@ def view_tournament(tid):
     standings = conn.execute('SELECT * FROM standings WHERE tournament_id = ? ORDER BY points DESC, gd DESC', (tid,)).fetchall()
     conn.close()
     
+    share_link = request.host_url.rstrip('/') + url_for('join_by_link', code=tournament['invite_code'])
+    
     return render_template('tournament.html', 
                          tournament=tournament, 
                          players=players, 
                          fixtures=fixtures, 
                          standings=standings, 
-                         user=session['user'])
+                         user=session['user'],
+                         share_link=share_link)
 
-@app.route('/tournament/join/<int:tid>', methods=['POST'])
-def join_tournament(tid):
-    if not session.get('user'): return redirect(url_for('login'))
+@app.route('/tournament/join/<code>')
+def join_by_link(code):
+    if not session.get('user'):
+        return redirect(url_for('login') + '?next=' + request.path)
+    
     conn = get_db()
+    tournament = conn.execute('SELECT * FROM tournaments WHERE invite_code = ?', (code,)).fetchone()
+    if not tournament:
+        flash('Invalid or expired link', 'error')
+        conn.close()
+        return redirect(url_for('dashboard'))
+    
     try:
-        conn.execute('INSERT INTO tournament_players (tournament_id, user_id) VALUES (?, ?)', (tid, session['user']['id']))
+        conn.execute('INSERT INTO tournament_players (tournament_id, user_id) VALUES (?, ?)', 
+                    (tournament['id'], session['user']['id']))
         conn.commit()
-        flash('Joined tournament!', 'success')
+        flash(f'Joined {tournament["name"]}!', 'success')
     except sqlite3.IntegrityError:
         flash('Already joined!', 'info')
     finally:
         conn.close()
-    return redirect(url_for('view_tournament', tid=tid))
+    
+    return redirect(url_for('view_tournament', tid=tournament['id']))
 
 @app.route('/tournament/generate/<int:tid>', methods=['POST'])
 def generate_fixtures(tid):
@@ -265,7 +300,6 @@ def update_score(tid):
             WHERE tournament_id = ? AND player = ?''',
             (played, won, drawn, lost, gf, ga, gd, points, goals, assists, tid, player))
 
-        # Update global stats
         conn.execute('''
             UPDATE users SET 
             goals = goals + ?, assists = assists + ?, matches_played = matches_played + 1,
