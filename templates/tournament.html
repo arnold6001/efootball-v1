@@ -1,30 +1,81 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container" data-aos="fade-up">
-  <h1 class="text-green">{{ tournament.name }}</h1>
-  <p>Created by: {{ tournament.created_by }}</p>
-
+  <h1>{{ tournament.name }}</h1>
+  <p>Created by {{ tournament.created_by }}</p>
   <div class="share-box">
-    <p><strong>Invite Link:</strong></p>
     <code id="share-link">{{ share_link }}</code>
-    <button onclick="copyLink()" class="btn-sm">Copy</button>
+    <button onclick="copyLink()" class="btn-sm">Copy Link</button>
   </div>
-
   <script>
   function copyLink() {
-    const link = document.getElementById('share-link').textContent;
-    navigator.clipboard.writeText(link);
-    alert('Link copied! Share on WhatsApp');
+    navigator.clipboard.writeText(document.getElementById('share-link').textContent);
+    alert('Link copied!');
   }
   </script>
 
-  <!-- Rest of your existing tournament code (fixtures, standings, etc.) -->
+  <button class="btn btn-secondary" onclick="location.href='/tournament/join/{{ tournament.invite_code }}'">Join</button>
+
   {% if fixtures|length == 0 %}
   <form method="POST" action="/tournament/generate/{{ tournament.id }}">
     <button type="submit" class="btn btn-danger">Generate Fixtures</button>
   </form>
   {% endif %}
 
-  <!-- Fixtures & Standings code same as before -->
+  <div class="split">
+    <div>
+      <h2>Fixtures</h2>
+      {% for f in fixtures %}
+      <div class="fixture">
+        {{ f.home }} vs {{ f.away }}
+        {% if f.played %}
+        ({{ f.home_score }} - {{ f.away_score }})
+        {% else %}
+        <form method="POST" action="/tournament/score/{{ tournament.id }}">
+          <input type="hidden" name="fixture_id" value="{{ f.id }}">
+          <input type="number" name="home_score" min="0" required>
+          - 
+          <input type="number" name="away_score" min="0" required>
+          <div>
+            {{ f.home }} G: <input type="number" name="home_goals" min="0">
+            A: <input type="number" name="home_assists" min="0">
+          </div>
+          <div>
+            {{ f.away }} G: <input type="number" name="away_goals" min="0">
+            A: <input type="number" name="away_assists" min="0">
+          </div>
+          <button type="submit" class="btn-sm">Update</button>
+        </form>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    <div>
+      <h2>Standings</h2>
+      <table class="table">
+        <thead>
+          <tr><th>Player</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Pts</th><th>G</th><th>A</th></tr>
+        </thead>
+        <tbody>
+          {% for s in standings %}
+          <tr>
+            <td><a href="/profile/{{ s.player }}">{{ s.player }}</a></td>
+            <td>{{ s.played }}</td>
+            <td>{{ s.won }}</td>
+            <td>{{ s.drawn }}</td>
+            <td>{{ s.lost }}</td>
+            <td>{{ s.gf }}</td>
+            <td>{{ s.ga }}</td>
+            <td>{{ s.gd }}</td>
+            <td>{{ s.points }}</td>
+            <td>{{ s.goals }}</td>
+            <td>{{ s.assists }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
 {% endblock %}
