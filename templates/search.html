@@ -1,30 +1,16 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container" data-aos="fade-up">
-  <h1>Search Tournaments</h1>
-  <form method="GET" class="search-form">
-    <input type="text" name="q" value="{{ query }}" placeholder="e.g. Nairobi Cup" required />
-    <button type="submit" class="btn btn-primary">Search</button>
-  </form>
-
-  {% if tournaments %}
-  <div class="grid mt-6">
+  <h1>Search Results for "{{ query }}"</h1>
+  <div class="grid">
     {% for t in tournaments %}
     <div class="card">
       <h3>{{ t.name }}</h3>
-      <p>By: {{ t.creator_name }}</p>
-      <div class="flex gap-2">
-        <a href="/tournament/{{ t.id }}" class="btn btn-sm">View</a>
-        <a href="/tournament/join/{{ t.invite_code }}" class="btn btn-success btn-sm">Join Now</a>
-      </div>
-      <small class="text-gray">Share: <code>/join/{{ t.invite_code }}</code></small>
+      <p>By {{ t.creator_name }}</p>
+      <a href="/tournament/join/{{ t.invite_code }}" class="btn btn-success">Join</a>
+      <a href="/tournament/{{ t.id }}" class="btn btn-sm">View</a>
     </div>
     {% endfor %}
   </div>
-  {% elif query %}
-  <p>No results for "{{ query }}"</p>
-  {% else %}
-  <p>Search for tournaments to join.</p>
-  {% endif %}
 </div>
 {% endblock %}
