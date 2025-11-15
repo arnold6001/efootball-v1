@@ -1,29 +1,24 @@
-<!-- Add this near top -->
-<div class="search-bar">
-  <form action="/search" method="GET">
-    <input type="text" name="q" placeholder="Search tournaments..." />
-    <button type="submit" class="btn btn-primary">Search</button>
-  </form>
-</div>
 {% extends "base.html" %}
 {% block content %}
 <div class="container" data-aos="fade-up">
-  <h1>Welcome, <span class="text-green">{{ user.username }}</span>!</h1>
-  <form method="POST" action="/tournament/create" class="inline">
-    <input type="text" name="name" placeholder="Tournament Name" required class="input-inline" />
-    <button type="submit" class="btn btn-success">+ Create Tournament</button>
+  <h1>Welcome, {{ user.username }}!</h1>
+  <form method="POST" action="/tournament/create">
+    <input type="text" name="name" placeholder="Tournament Name" required>
+    <button type="submit" class="btn btn-success">Create Tournament</button>
   </form>
 
-  <h2 class="mt-8">Your Tournaments</h2>
+  <form action="/search" method="GET" class="search-form">
+    <input type="text" name="q" placeholder="Search tournaments...">
+    <button type="submit" class="btn btn-primary">Search</button>
+  </form>
+
+  <h2>Your Tournaments</h2>
   <div class="grid">
     {% for t in tournaments %}
-    <div class="card" data-aos="fade-up" data-aos-delay="100">
+    <div class="card">
       <h3>{{ t.name }}</h3>
-      <p>Created by: {{ t.created_by }}</p>
-      <a href="/tournament/{{ t.id }}" class="btn btn-sm">View →</a>
+      <a href="/tournament/{{ t.id }}" class="btn btn-sm">View</a>
     </div>
-    {% else %}
-    <p>No tournaments yet. Create one!</p>
     {% endfor %}
   </div>
 </div>
