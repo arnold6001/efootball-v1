@@ -1,3 +1,10 @@
+<!-- Add this near top -->
+<div class="search-bar">
+  <form action="/search" method="GET">
+    <input type="text" name="q" placeholder="Search tournaments..." />
+    <button type="submit" class="btn btn-primary">Search</button>
+  </form>
+</div>
 {% extends "base.html" %}
 {% block content %}
 <div class="container" data-aos="fade-up">
