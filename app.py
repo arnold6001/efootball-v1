@@ -1,18 +1,18 @@
-# app.py - eFootball Freaks (Python 3 + Flask + SQLite)
+# app.py - eFootball Freaks (100% Working)
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 import os
 import itertools
+from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SESSION_SECRET', 'efootball-freaks-arnold-2025')
+app.secret_key = os.environ.get('SESSION_SECRET', 'efootball-freaks-arnold-chirchir-2025')
 DB_NAME = 'data/efootball.db'
 
-# Ensure data folder
+# Create data folder
 os.makedirs('data', exist_ok=True)
 
-# Initialize DB
 def init_db():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -21,20 +21,28 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
             email TEXT,
-            password TEXT NOT NULL
+            password TEXT NOT NULL,
+            goals INTEGER DEFAULT 0,
+            assists INTEGER DEFAULT 0,
+            matches_played INTEGER DEFAULT 0,
+            wins INTEGER DEFAULT 0
         );
+
         CREATE TABLE IF NOT EXISTS tournaments (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             created_by TEXT NOT NULL,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         );
+
         CREATE TABLE IF NOT EXISTS tournament_players (
             tournament_id INTEGER,
             user_id INTEGER,
             FOREIGN KEY(tournament_id) REFERENCES tournaments(id),
-            FOREIGN KEY(user_id) REFERENCES users(id)
+            FOREIGN KEY(user_id) REFERENCES users(id),
+            UNIQUE(tournament_id, user_id)
         );
+
         CREATE TABLE IF NOT EXISTS fixtures (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             tournament_id INTEGER,
@@ -44,6 +52,7 @@ def init_db():
             away_score INTEGER DEFAULT 0,
             played INTEGER DEFAULT 0
         );
+
         CREATE TABLE IF NOT EXISTS standings (
             tournament_id INTEGER,
             player TEXT,
@@ -54,7 +63,10 @@ def init_db():
             gf INTEGER DEFAULT 0,
             ga INTEGER DEFAULT 0,
             gd INTEGER DEFAULT 0,
-            points INTEGER DEFAULT 0
+            points INTEGER DEFAULT 0,
+            goals INTEGER DEFAULT 0,
+            assists INTEGER DEFAULT 0,
+            UNIQUE(tournament_id, player)
         );
     ''')
     conn.commit()
@@ -67,7 +79,8 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
-# Routes
+# --- ROUTES ---
+
 @app.route('/')
 def index():
     return render_template('index.html', user=session.get('user'))
@@ -82,9 +95,9 @@ def register():
         try:
             conn.execute('INSERT INTO users (username, email, password) VALUES (?, ?, ?)', (username, email, password))
             conn.commit()
-            flash('Registered! Please login.', 'success')
+            flash('Registered! Login now.', 'success')
             return redirect(url_for('login'))
-        except:
+        except sqlite3.IntegrityError:
             flash('Username already taken!', 'error')
         finally:
             conn.close()
@@ -119,6 +132,7 @@ def dashboard():
         SELECT t.* FROM tournaments t
         JOIN tournament_players tp ON t.id = tp.tournament_id
         WHERE tp.user_id = ?
+        ORDER BY t.created_at DESC
     ''', (user_id,)).fetchall()
     conn.close()
     return render_template('dashboard.html', user=session['user'], tournaments=tournaments)
@@ -127,6 +141,9 @@ def dashboard():
 def create_tournament():
     if not session.get('user'): return redirect(url_for('login'))
     name = request.form['name'].strip()
+    if not name:
+        flash('Tournament name required', 'error')
+        return redirect(url_for('dashboard'))
     created_by = session['user']['username']
     conn = get_db()
     cursor = conn.execute('INSERT INTO tournaments (name, created_by) VALUES (?, ?)', (name, created_by))
@@ -145,23 +162,36 @@ def view_tournament(tid):
     if not tournament:
         flash('Tournament not found', 'error')
         return redirect(url_for('dashboard'))
+    
     players = [row['username'] for row in conn.execute('''
-        SELECT u.username FROM users u JOIN tournament_players tp ON u.id = tp.user_id
+        SELECT u.username FROM users u
+        JOIN tournament_players tp ON u.id = tp.user_id
         WHERE tp.tournament_id = ?
     ''', (tid,)).fetchall()]
+    
     fixtures = conn.execute('SELECT * FROM fixtures WHERE tournament_id = ? ORDER BY id', (tid,)).fetchall()
     standings = conn.execute('SELECT * FROM standings WHERE tournament_id = ? ORDER BY points DESC, gd DESC', (tid,)).fetchall()
     conn.close()
-    return render_template('tournament.html', tournament=tournament, players=players, fixtures=fixtures, standings=standings, user=session['user'])
+    
+    return render_template('tournament.html', 
+                         tournament=tournament, 
+                         players=players, 
+                         fixtures=fixtures, 
+                         standings=standings, 
+                         user=session['user'])
 
 @app.route('/tournament/join/<int:tid>', methods=['POST'])
 def join_tournament(tid):
     if not session.get('user'): return redirect(url_for('login'))
     conn = get_db()
-    conn.execute('INSERT OR IGNORE INTO tournament_players (tournament_id, user_id) VALUES (?, ?)', (tid, session['user']['id']))
-    conn.commit()
-    conn.close()
-    flash('Joined tournament!', 'success')
+    try:
+        conn.execute('INSERT INTO tournament_players (tournament_id, user_id) VALUES (?, ?)', (tid, session['user']['id']))
+        conn.commit()
+        flash('Joined tournament!', 'success')
+    except sqlite3.IntegrityError:
+        flash('Already joined!', 'info')
+    finally:
+        conn.close()
     return redirect(url_for('view_tournament', tid=tid))
 
 @app.route('/tournament/generate/<int:tid>', methods=['POST'])
@@ -169,19 +199,26 @@ def generate_fixtures(tid):
     if not session.get('user'): return redirect(url_for('login'))
     conn = get_db()
     players = [row['username'] for row in conn.execute('''
-        SELECT u.username FROM users u JOIN tournament_players tp ON u.id = tp.user_id
+        SELECT u.username FROM users u
+        JOIN tournament_players tp ON u.id = tp.user_id
         WHERE tp.tournament_id = ?
     ''', (tid,)).fetchall()]
+    
     if len(players) < 2:
-        flash('Need at least 2 players to generate fixtures', 'error')
+        flash('Need at least 2 players', 'error')
+        conn.close()
         return redirect(url_for('view_tournament', tid=tid))
+    
     conn.execute('DELETE FROM fixtures WHERE tournament_id = ?', (tid,))
     conn.execute('DELETE FROM standings WHERE tournament_id = ?', (tid,))
+    
     for home, away in itertools.combinations(players, 2):
         conn.execute('INSERT INTO fixtures (tournament_id, home, away) VALUES (?, ?, ?)', (tid, home, away))
         conn.execute('INSERT INTO fixtures (tournament_id, home, away) VALUES (?, ?, ?)', (tid, away, home))
+    
     for p in players:
         conn.execute('INSERT INTO standings (tournament_id, player) VALUES (?, ?)', (tid, p))
+    
     conn.commit()
     conn.close()
     flash('Fixtures generated!', 'success')
@@ -193,24 +230,75 @@ def update_score(tid):
     fixture_id = int(request.form['fixture_id'])
     home_score = int(request.form['home_score'])
     away_score = int(request.form['away_score'])
+    home_goals = int(request.form.get('home_goals', 0))
+    away_goals = int(request.form.get('away_goals', 0))
+    home_assists = int(request.form.get('home_assists', 0))
+    away_assists = int(request.form.get('away_assists', 0))
+
     conn = get_db()
     fixture = conn.execute('SELECT * FROM fixtures WHERE id = ?', (fixture_id,)).fetchone()
-    conn.execute('UPDATE fixtures SET home_score = ?, away_score = ?, played = 1 WHERE id = ?', (home_score, away_score, fixture_id))
-    for player, gf, ga in [(fixture['home'], home_score, away_score), (fixture['away'], away_score, home_score)]:
+    if not fixture:
+        flash('Fixture not found', 'error')
+        conn.close()
+        return redirect(url_for('view_tournament', tid=tid))
+
+    conn.execute('UPDATE fixtures SET home_score = ?, away_score = ?, played = 1 WHERE id = ?',
+                 (home_score, away_score, fixture_id))
+
+    for player, gf, ga, goals, assists in [
+        (fixture['home'], home_score, away_score, home_goals, home_assists),
+        (fixture['away'], away_score, home_score, away_goals, away_assists)
+    ]:
         standing = conn.execute('SELECT * FROM standings WHERE tournament_id = ? AND player = ?', (tid, player)).fetchone()
+        if not standing:
+            continue
         played = standing['played'] + 1
         won = standing['won'] + (1 if gf > ga else 0)
         drawn = standing['drawn'] + (1 if gf == ga else 0)
         lost = standing['lost'] + (1 if gf < ga else 0)
         points = won * 3 + drawn
         gd = (standing['gf'] + gf) - (standing['ga'] + ga)
-        conn.execute('''UPDATE standings SET played = ?, won = ?, drawn = ?, lost = ?, gf = gf + ?, ga = ga + ?, gd = ?, points = ?
-                        WHERE tournament_id = ? AND player = ?''',
-                     (played, won, drawn, lost, gf, ga, gd, points, tid, player))
+
+        conn.execute('''UPDATE standings SET 
+            played = ?, won = ?, drawn = ?, lost = ?, gf = gf + ?, ga = ga + ?, gd = ?, points = ?, 
+            goals = goals + ?, assists = assists + ?
+            WHERE tournament_id = ? AND player = ?''',
+            (played, won, drawn, lost, gf, ga, gd, points, goals, assists, tid, player))
+
+        # Update global stats
+        conn.execute('''
+            UPDATE users SET 
+            goals = goals + ?, assists = assists + ?, matches_played = matches_played + 1,
+            wins = wins + ?
+            WHERE username = ?
+        ''', (goals, assists, 1 if gf > ga else 0, player))
+
     conn.commit()
     conn.close()
-    flash('Score updated!', 'success')
+    flash('Score & stats updated!', 'success')
     return redirect(url_for('view_tournament', tid=tid))
 
+@app.route('/profile/<username>')
+def profile(username):
+    if not session.get('user'):
+        return redirect(url_for('login'))
+    conn = get_db()
+    player = conn.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
+    if not player:
+        flash('Player not found', 'error')
+        conn.close()
+        return redirect(url_for('dashboard'))
+    
+    stats = conn.execute('''
+        SELECT t.name, s.*
+        FROM standings s
+        JOIN tournaments t ON s.tournament_id = t.id
+        WHERE s.player = ?
+        ORDER BY t.created_at DESC
+    ''', (username,)).fetchall()
+    
+    conn.close()
+    return render_template('profile.html', player=player, stats=stats, user=session['user'])
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
