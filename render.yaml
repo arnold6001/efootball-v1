@@ -1,0 +1,12 @@
+# render.yaml
+services:
+  - type: web
+    name: efootball-freaks
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      SESSION_SECRET: efootball-freaks-arnold-chirchir-2025
+      PYTHON_VERSION: 3.11.6
