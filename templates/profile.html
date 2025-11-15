@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container" data-aos="fade-up">
+  <div class="profile-header">
+    <div class="avatar-circle">{{ player.username[0].upper() }}</div>
+    <div>
+      <h1>@{{ player.username }}</h1>
+      <p class="text-green">eFootball Freak</p>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card"><h3>{{ player.matches_played }}</h3><p>Matches</p></div>
+    <div class="stat-card"><h3>{{ player.wins }}</h3><p>Wins</p></div>
+    <div class="stat-card"><h3>{{ player.goals }}</h3><p>Goals</p></div>
+    <div class="stat-card"><h3>{{ player.assists }}</h3><p>Assists</p></div>
+  </div>
+
+  <h2 class="mt-8">Tournament History</h2>
+  <div class="table-container">
+    <table class="table">
+      <thead>
+        <tr><th>Tournament</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>Pts</th><th>G</th><th>A</th></tr>
+      </thead>
+      <tbody>
+        {% for s in stats %}
+        <tr>
+          <td>{{ s.name }}</td>
+          <td>{{ s.played }}</td><td>{{ s.won }}</td><td>{{ s.drawn }}</td><td>{{ s.lost }}</td>
+          <td>{{ s.gf }}</td><td>{{ s.ga }}</td><td>{{ s.points }}</td>
+          <td class="text-green">{{ s.goals }}</td><td class="text-yellow">{{ s.assists }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
