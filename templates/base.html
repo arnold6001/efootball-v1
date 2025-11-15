@@ -4,17 +4,29 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>eFootball Freaks</title>
-  <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Rajdhani:wght@600&display=swap" rel="stylesheet">
   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet" />
+  <link href="{{ url_for('static', filename='animations.css') }}" rel="stylesheet" />
 </head>
-<body class="bg-gray-900 text-white min-h-screen">
-  {% with messages = get_flashed_messages() %}
+<body>
+  {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-      <div class="bg-red-600 p-3 text-center">{{ messages[0] }}</div>
+      {% for category, message in messages %}
+        <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} text-center">{{ message }}</div>
+      {% endfor %}
     {% endif %}
   {% endwith %}
+
   {% block content %}{% endblock %}
-  <script> AOS.init(); </script>
+
+  <footer class="text-center py-6 text-gray-400">
+    <p>© 2025 <strong>Arnold Chirchir</strong> | eFootball Freaks</p>
+    <p>Email: <a href="mailto:arnoldkipruto193@gmail.com" class="text-green-400">arnoldkipruto193@gmail.com</a></p>
+    <p>WhatsApp: <a href="https://wa.me/254703110780" class="text-green-400">+254 703 110 780</a></p>
+  </footer>
+
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>AOS.init({ duration: 800 });</script>
 </body>
 </html>
